@@ -7,6 +7,8 @@ library(corrplot)
 library(data.table)
 library(summarytools)
 library(dplyr)
+library("ggplot2")
+library("GGally")
 
 options(max.print = 150)
 
@@ -17,6 +19,9 @@ data <- read_tsv("transcoding_mesurment.tsv")
 # Check whether there's NA value in the dataset
 sum(is.na(data))
 # Checked - No NA value
+
+# Check internal structure
+str(data)
 ##############################################################
 
 # Data Wrangling - Turn width & height into 1 column - resolution
@@ -24,13 +29,16 @@ data$i_resolution <- paste(as.numeric(data$width * data$height))
 
 data$o_resolution <- paste(as.numeric(data$o_width * data$o_height))
 
+n_distinct(data$height)
+
 transcodeData <- data
 transcodeData = transcodeData[,-1]
-# transcodeData = transcodeData[,-3:-4]
+transcodeData = transcodeData[,-3:-4]
 # transcodeData <- data[,c('duration','i_resolution', 'o_resolution','framerate', 'codec','o_codec','bitrate','i','i_size','p','p_size','b','b_size','utime')]
 transcodeData$i_resolution <- as.numeric(transcodeData$i_resolution)
 
 transcodeData$o_resolution <- as.numeric(transcodeData$o_resolution)
+
 
 # Add new field - is_same_codec:
 transcodeData$is_same_codec <- ifelse(transcodeData$codec == transcodeData$o_codec, 1, 0)
@@ -63,28 +71,34 @@ colnames(transcodeData)[which(names(transcodeData) == "utime")] <- "Transcode_ti
 transcodeData
 sum(is.na(transcodeData$i_resolution))
 sum(is.na(transcodeData$o_resolution))
+
+n_distinct(transcodeData$i_resolution)
+n_distinct(transcodeData$o_resolution)
+
 descr(as.data.frame(transcodeData), transpose = TRUE, stats = c('mean', 'sd', 'min', 'max', 'med', 'Q1', 'IQR', 'Q3'))
 
 ######################## HISTOGRAM #############################
-# par(mfrow=c(3,2))
-# hist(transcodeData$duration,main="Duration",
-#       xlab="", col="cyan", breaks=50)
-# hist(transcodeData$resolution,main="Resolution",
-#       xlab="", col="cyan", breaks=50)
-# hist(transcodeData$framerate,main="Framerate",
-#       xlab="", col="cyan", breaks=50)
-# hist(transcodeData$bitrate,main="Bitrate",
-#       xlab="", col="cyan", breaks=50)
-# hist(transcodeData$i,main="No. i",
-#       xlab="", col="cyan", breaks=50)
-# hist(transcodeData$i_size,main="i Size",
-#       xlab="", col="cyan", breaks=50)
-# hist(transcodeData$p,main="No. p",
-#       xlab="", col="cyan", breaks=50)
-# hist(transcodeData$p_size,main="p Size",
-#       xlab="", col="cyan", breaks=50)
-# hist(transcodeData$utime,main="Transcoding Time",
-#       xlab="", col="cyan", breaks=50)
+par(mfrow=c(2,2))
+hist(transcodeData$duration,main="Duration",
+      xlab="", col="cyan", breaks=50)
+hist(transcodeData$i_resolution,main="Input Resolution",
+      xlab="", col="cyan", breaks=50)
+hist(transcodeData$o_resolution,main="Output Resolution",
+      xlab="", col="cyan", breaks=50)
+hist(transcodeData$Transcode_time,main="Transcoding Time",
+      xlab="", col="cyan", breaks=50)
+hist(transcodeData$framerate,main="Framerate",
+      xlab="", col="cyan", breaks=50)
+hist(transcodeData$bitrate,main="Bitrate",
+      xlab="", col="cyan", breaks=50)
+hist(transcodeData$i,main="No. i",
+      xlab="", col="cyan", breaks=50)
+hist(transcodeData$i_size,main="i Size",
+      xlab="", col="cyan", breaks=50)
+hist(transcodeData$p,main="No. p",
+      xlab="", col="cyan", breaks=50)
+hist(transcodeData$p_size,main="p Size",
+      xlab="", col="cyan", breaks=50)
 ################################################################
 
 ######################## PAIR PLOT #############################
@@ -117,7 +131,25 @@ tmpDF$o_codec <- NULL
 # 
 # tmpDF
 # 
-# pairs(tmpDF[, 1:5])
+png("pairs_plot_1.png", width = 1000, height = 1000)
+ggpairs(tmpDF[, 1:5],
+        mapping = ggplot2::aes(color = "sex"))
+dev.off()
+
+png("pairs_plot_2.png", width = 1000, height = 1000)
+ggpairs(tmpDF[, 6:10],
+      mapping = ggplot2::aes(color = "sex"))
+dev.off()
+
+png("pairs_plot_3.png", width = 1000, height = 1000)
+ggpairs(tmpDF[, 11:15],
+      mapping = ggplot2::aes(color = "sex"))
+dev.off()
+
+png("pairs_plot_4.png", width = 1000, height = 1000)
+ggpairs(tmpDF[, 16:19],
+      mapping = ggplot2::aes(color = "sex"))
+dev.off()
 ################################################################
 
 ######################## BOX PLOT #############################
@@ -174,12 +206,12 @@ tmpDF$o_codec <- NULL
 ################################################################
 
 ######################## CORRR MAP #############################
-# Correlation heatmap
-CR <- cor(tmpDF)
-View(CR)
-png("corr_plot.png", width = 6000, height = 6000)
-corrplot(CR, addCoef.col = 1, cl.cex = 6,
-         tl.cex = 3, number.cex = 0.01)
-dev.off()
+# # Correlation heatmap
+# CR <- cor(tmpDF)
+# # View(CR)
+# png("corr_plot.png", width = 6000, height = 6000)
+# corrplot(CR, addCoef.col = 1, cl.cex = 6,
+#          tl.cex = 3, number.cex = 0.01)
+# dev.off()
 
 ################################################################
